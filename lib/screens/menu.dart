@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:myportofolio_mobile/widgets/left_drawer.dart';
 import 'package:myportofolio_mobile/widgets/project_card.dart';
+import 'package:myportofolio_mobile/screens/education_form.dart';
 
 class MyHomePage extends StatelessWidget {
   MyHomePage({super.key});
@@ -10,12 +11,12 @@ class MyHomePage extends StatelessWidget {
   final String kelas = "PBP B";
 
   final List<ItemHomepage> items = [
-    ItemHomepage("Lihat Portfolio", Icons.folder, Colors.cyan),
-    ItemHomepage("Tambah Experience", Icons.add_circle,Colors.deepOrange),
+    ItemHomepage("Add Education", Icons.add_circle, Colors.cyan),
+    ItemHomepage("Add Experience", Icons.add_circle, Colors.deepOrange),
     ItemHomepage("Logout", Icons.logout, Colors.lightGreenAccent),
   ];
 
-    @override
+  @override
   Widget build(BuildContext context) {
     // Scaffold menyediakan struktur visual dasar halaman (AppBar, Body, SnackBar).
     return Scaffold(
@@ -23,13 +24,10 @@ class MyHomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'MyPortfolio',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Theme.of(context).colorScheme.primary,
-        iconTheme: const IconThemeData(color: Colors.white)
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       drawer: const LeftDrawer(),
       // Body halaman utama dengan padding di sekelilingnya.
@@ -75,7 +73,17 @@ class MyHomePage extends StatelessWidget {
                     // shrinkWrap agar ukuran kisi menyesuaikan tinggi konten anak.
                     shrinkWrap: true,
                     children: items.map((ItemHomepage item) {
-                      return ItemCard(item);
+                      return ItemCard(
+                        item,
+                        onTap: item.name == 'Add Education'
+                            ? () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const EducationFormPage(),
+                                ),
+                              )
+                            : null,
+                      );
                     }).toList(),
                   ),
                 ],
@@ -107,10 +115,7 @@ class InfoCard extends StatelessWidget {
         // Menyusun teks title dan content secara vertikal.
         child: Column(
           children: [
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8.0),
             Text(content),
           ],
@@ -126,4 +131,3 @@ class ItemHomepage {
   final Color color;
   ItemHomepage(this.name, this.icon, this.color);
 }
-

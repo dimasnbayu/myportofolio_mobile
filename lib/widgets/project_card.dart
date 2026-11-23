@@ -1,13 +1,13 @@
 
 import 'package:myportofolio_mobile/screens/menu.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:myportofolio_mobile/screens/project_form.dart';
 
 
 class ItemCard extends StatelessWidget {
   final ItemHomepage item;
+  final VoidCallback? onTap;
 
-  const ItemCard(this.item, {super.key});
+  const ItemCard(this.item, {super.key, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +18,10 @@ class ItemCard extends StatelessWidget {
       child: InkWell(
         // Area responsif terhadap sentuhan
         onTap: () {
+          if (onTap != null) {
+            onTap!();
+            return;
+          }
           // Memunculkan SnackBar ketika diklik
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
@@ -28,9 +32,6 @@ class ItemCard extends StatelessWidget {
             );
 
           // Navigate ke halaman yang sesuai
-          if (item.name == "Tambah Proyek") {
-            // TODO: Gunakan Navigator.push() untuk melakukan navigasi ke MaterialPageRoute yang mencakup ProjectFormPage
-          }
         },
         child: Container(
           padding: const EdgeInsets.all(8),

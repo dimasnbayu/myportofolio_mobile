@@ -1,20 +1,21 @@
 import 'package:material_ui/material_ui.dart';
+
 // TODO: Impor drawer yang sudah dibuat sebelumnya
 
-class ProjectFormPage extends StatefulWidget {
-  const ProjectFormPage({super.key});
+class ExperienceFormPage extends StatefulWidget {
+  const ExperienceFormPage({super.key});
 
   @override
-  State<ProjectFormPage> createState() => _ProjectFormPageState();
+  State<ExperienceFormPage> createState() => _ExperienceFormPageState();
 }
 
-class _ProjectFormPageState extends State<ProjectFormPage> {
+class _ExperienceFormPageState extends State<ExperienceFormPage> {
   final _formKey = GlobalKey<FormState>();
-  String _projectName = "";
+  String _experienceName = "";
   String _description = "";
   String _category = "Web Development"; // default
   String _technologies = "";
-  String _projectLink = "";
+  String _experienceLink = "";
 
   final List<String> _categories = [
     'Web Development',
@@ -27,11 +28,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Center(
-          child: Text(
-            'Add Project Form',
-          ),
-        ),
+        title: const Center(child: Text('Add Experience Form')),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
       ),
@@ -42,25 +39,25 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // === Project Name ===
+              // === Experience Name ===
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   decoration: InputDecoration(
-                    hintText: "Nama Proyek",
-                    labelText: "Nama Proyek",
+                    hintText: "Nama Experience",
+                    labelText: "Nama Experience",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
                     ),
                   ),
                   onChanged: (String? value) {
                     setState(() {
-                      _projectName = value!;
+                      _experienceName = value!;
                     });
                   },
                   validator: (String? value) {
                     if (value == null || value.trim().isEmpty) {
-                      return "Nama proyek tidak boleh kosong!";
+                      return "Nama experience tidak boleh kosong!";
                     }
                     return null;
                   },
@@ -72,8 +69,8 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
                 child: TextFormField(
                   maxLines: 5,
                   decoration: InputDecoration(
-                    hintText: "Deskripsi Proyek",
-                    labelText: "Deskripsi Proyek",
+                    hintText: "Deskripsi Experience",
+                    labelText: "Deskripsi Experience",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
                     ),
@@ -85,7 +82,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
                   },
                   validator: (String? value) {
                     if (value == null || value.trim().isEmpty) {
-                      return "Deskripsi proyek tidak boleh kosong!";
+                      return "Deskripsi experience tidak boleh kosong!";
                     }
                     return null;
                   },
@@ -97,17 +94,19 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
                 padding: const EdgeInsets.all(8.0),
                 child: DropdownButtonFormField<String>(
                   decoration: InputDecoration(
-                    labelText: "Kategori Proyek",
+                    labelText: "Kategori Experience",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
                     ),
                   ),
                   initialValue: _category,
                   items: _categories
-                      .map((category) => DropdownMenuItem(
-                            value: category,
-                            child: Text(category),
-                          ))
+                      .map(
+                        (category) => DropdownMenuItem(
+                          value: category,
+                          child: Text(category),
+                        ),
+                      )
                       .toList(),
                   onChanged: (String? newValue) {
                     setState(() {
@@ -136,20 +135,20 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
                 ),
               ),
 
-              // === Project Link ===
+              // === Experience Link ===
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   decoration: InputDecoration(
-                    hintText: "URL Proyek (opsional)",
-                    labelText: "Tautan Proyek",
+                    hintText: "URL Experience (opsional)",
+                    labelText: "Tautan Experience",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
                     ),
                   ),
                   onChanged: (String? value) {
                     setState(() {
-                      _projectLink = value!;
+                      _experienceLink = value!;
                     });
                   },
                 ),
@@ -161,8 +160,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: ElevatedButton(
                     style: ButtonStyle(
-                      backgroundColor:
-                          WidgetStateProperty.all(Colors.indigo),
+                      backgroundColor: WidgetStateProperty.all(Colors.indigo),
                     ),
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
@@ -170,16 +168,18 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
                           context: context,
                           builder: (context) {
                             return AlertDialog(
-                              title: const Text('Proyek berhasil ditambahkan!'),
+                              title: const Text(
+                                'Experience berhasil ditambahkan!',
+                              ),
                               content: SingleChildScrollView(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Nama Proyek: $_projectName'),
+                                    Text('Nama Experience: $_experienceName'),
                                     Text('Deskripsi: $_description'),
                                     Text('Kategori: $_category'),
                                     Text('Teknologi: $_technologies'),
-                                    Text('Tautan: $_projectLink'),
+                                    Text('Tautan: $_experienceLink'),
                                   ],
                                 ),
                               ),
