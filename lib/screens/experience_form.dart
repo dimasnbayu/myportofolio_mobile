@@ -1,6 +1,9 @@
 import 'package:material_ui/material_ui.dart';
-
-// TODO: Impor drawer yang sudah dibuat sebelumnya
+import 'package:myportofolio_mobile/models/experience.dart';
+import 'package:myportofolio_mobile/services/api_client.dart';
+import 'package:myportofolio_mobile/services/auth_state.dart';
+import 'package:myportofolio_mobile/widgets/auth_guard.dart';
+import 'package:provider/provider.dart';
 
 class ExperienceFormPage extends StatefulWidget {
   const ExperienceFormPage({super.key});
@@ -11,201 +14,179 @@ class ExperienceFormPage extends StatefulWidget {
 
 class _ExperienceFormPageState extends State<ExperienceFormPage> {
   final _formKey = GlobalKey<FormState>();
-  String _experienceName = "";
-  String _description = "";
-  String _category = "Web Development"; // default
-  String _technologies = "";
-  String _experienceLink = "";
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _thumbnailController = TextEditingController();
 
-  final List<String> _categories = [
-    'Web Development',
-    'Mobile Development',
-    'Machine Learning',
-    'Data Science',
-    'Other',
-  ];
+  static const _categories = <String, String>{
+    'internship': 'Internship',
+    'research': 'Research',
+    'volunteer': 'Volunteer',
+    'part-time': 'Part-Time',
+    'full-time': 'Full-Time',
+    'freelance': 'Freelance',
+  };
+
+  String _category = 'full-time';
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _thumbnailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (!await ensureLoggedIn(context) || !mounted) return;
+
+    final token = context.read<AuthState>().token;
+    if (token == null) return;
+
+    setState(() => _isSubmitting = true);
+    final experience = Experience(
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim(),
+      category: _category,
+      thumbnail: _thumbnailController.text.trim(),
+    );
+
+    try {
+      await context.read<ApiClient>().createExperience(
+        experience,
+        token: token,
+      );
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Experience added'),
+          content: const Text('The experience was saved to the backend.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      if (mounted) Navigator.pop(context, true);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      if (error.statusCode == 401) {
+        try {
+          await context.read<AuthState>().logout();
+        } catch (_) {
+          // The local token is cleared by AuthState even if logout fails.
+        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Session expired. Please log in again.'),
+          ),
+        );
+        await ensureLoggedIn(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Request failed (${error.statusCode}).')),
+        );
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to save experience: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  String? _validateOptionalUrl(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final uri = Uri.tryParse(value.trim());
+    if (uri == null ||
+        !uri.hasAuthority ||
+        uri.host.isEmpty ||
+        (uri.scheme != 'http' && uri.scheme != 'https')) {
+      return 'Enter a valid http or https URL.';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Center(child: Text('Add Experience Form')),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
-      ),
-      // TODO: Tambahkan drawer yang sudah dibuat di sini
+      appBar: AppBar(title: const Text('Add Experience')),
       body: Form(
         key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // === Experience Name ===
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    hintText: "Nama Experience",
-                    labelText: "Nama Experience",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                  ),
-                  onChanged: (String? value) {
-                    setState(() {
-                      _experienceName = value!;
-                    });
-                  },
-                  validator: (String? value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "Nama experience tidak boleh kosong!";
-                    }
-                    return null;
-                  },
-                ),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            TextFormField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                labelText: 'Title',
+                border: OutlineInputBorder(),
               ),
-              // === Description ===
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextFormField(
-                  maxLines: 5,
-                  decoration: InputDecoration(
-                    hintText: "Deskripsi Experience",
-                    labelText: "Deskripsi Experience",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                  ),
-                  onChanged: (String? value) {
-                    setState(() {
-                      _description = value!;
-                    });
-                  },
-                  validator: (String? value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "Deskripsi experience tidak boleh kosong!";
-                    }
-                    return null;
-                  },
-                ),
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? 'Title cannot be empty.'
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _descriptionController,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                border: OutlineInputBorder(),
               ),
-
-              // === Category ===
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    labelText: "Kategori Experience",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                  ),
-                  initialValue: _category,
-                  items: _categories
-                      .map(
-                        (category) => DropdownMenuItem(
-                          value: category,
-                          child: Text(category),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _category = newValue!;
-                    });
-                  },
-                ),
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? 'Description cannot be empty.'
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: _category,
+              decoration: const InputDecoration(
+                labelText: 'Category',
+                border: OutlineInputBorder(),
               ),
-
-              // === Technologies ===
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    hintText: "Contoh: Flutter, Django, Figma",
-                    labelText: "Teknologi yang Digunakan",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
+              items: _categories.entries
+                  .map(
+                    (entry) => DropdownMenuItem(
+                      value: entry.key,
+                      child: Text(entry.value),
                     ),
-                  ),
-                  onChanged: (String? value) {
-                    setState(() {
-                      _technologies = value!;
-                    });
-                  },
-                ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) setState(() => _category = value);
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _thumbnailController,
+              keyboardType: TextInputType.url,
+              decoration: const InputDecoration(
+                labelText: 'Thumbnail URL (optional)',
+                border: OutlineInputBorder(),
               ),
-
-              // === Experience Link ===
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    hintText: "URL Experience (opsional)",
-                    labelText: "Tautan Experience",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                  ),
-                  onChanged: (String? value) {
-                    setState(() {
-                      _experienceLink = value!;
-                    });
-                  },
-                ),
-              ),
-              // === Tombol Simpan ===
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.all(Colors.indigo),
-                    ),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text(
-                                'Experience berhasil ditambahkan!',
-                              ),
-                              content: SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Nama Experience: $_experienceName'),
-                                    Text('Deskripsi: $_description'),
-                                    Text('Kategori: $_category'),
-                                    Text('Teknologi: $_technologies'),
-                                    Text('Tautan: $_experienceLink'),
-                                  ],
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  child: const Text('OK'),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    _formKey.currentState!.reset();
-                                  },
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      }
-                    },
-                    child: const Text(
-                      "Save",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+              validator: _validateOptionalUrl,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _isSubmitting ? null : _submit,
+              child: _isSubmitting
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save Experience'),
+            ),
+          ],
         ),
       ),
     );

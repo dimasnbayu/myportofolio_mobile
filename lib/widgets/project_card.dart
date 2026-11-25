@@ -1,7 +1,5 @@
-
 import 'package:myportofolio_mobile/screens/menu.dart';
 import 'package:material_ui/material_ui.dart';
-
 
 class ItemCard extends StatelessWidget {
   final ItemHomepage item;
@@ -39,11 +37,7 @@ class ItemCard extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  item.icon,
-                  color: Colors.white,
-                  size: 30.0,
-                ),
+                Icon(item.icon, color: Colors.white, size: 30.0),
                 const Padding(padding: EdgeInsets.all(3)),
                 Text(
                   item.name,

@@ -2,22 +2,34 @@ import 'package:material_ui/material_ui.dart';
 import 'package:myportofolio_mobile/widgets/left_drawer.dart';
 import 'package:myportofolio_mobile/widgets/project_card.dart';
 import 'package:myportofolio_mobile/screens/education_form.dart';
+import 'package:myportofolio_mobile/screens/experience_form.dart';
+import 'package:myportofolio_mobile/screens/experience_list_screen.dart';
+import 'package:myportofolio_mobile/screens/login_screen.dart';
+import 'package:myportofolio_mobile/services/api_client.dart';
+import 'package:myportofolio_mobile/services/auth_state.dart';
+import 'package:myportofolio_mobile/widgets/auth_guard.dart';
+import 'package:provider/provider.dart';
 
 class MyHomePage extends StatelessWidget {
-  MyHomePage({super.key});
+  const MyHomePage({super.key});
 
   final String npm = "2506534636";
   final String nama = "Dimas Bayu Nugroho";
   final String kelas = "PBP B";
 
-  final List<ItemHomepage> items = [
-    ItemHomepage("Add Education", Icons.add_circle, Colors.cyan),
-    ItemHomepage("Add Experience", Icons.add_circle, Colors.deepOrange),
-    ItemHomepage("Logout", Icons.logout, Colors.lightGreenAccent),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final isLoggedIn = context.watch<AuthState>().isLoggedIn;
+    final items = <ItemHomepage>[
+      ItemHomepage("Experiences", Icons.work_outline, Colors.indigo),
+      ItemHomepage("Add Education", Icons.add_circle, Colors.cyan),
+      ItemHomepage("Add Experience", Icons.add_circle, Colors.deepOrange),
+      if (isLoggedIn)
+        ItemHomepage("Logout", Icons.logout, Colors.lightGreenAccent)
+      else
+        ItemHomepage("Login", Icons.login, Colors.lightGreenAccent),
+    ];
+
     // Scaffold menyediakan struktur visual dasar halaman (AppBar, Body, SnackBar).
     return Scaffold(
       // AppBar menampilkan bar bagian atas halaman aplikasi.
@@ -75,14 +87,7 @@ class MyHomePage extends StatelessWidget {
                     children: items.map((ItemHomepage item) {
                       return ItemCard(
                         item,
-                        onTap: item.name == 'Add Education'
-                            ? () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const EducationFormPage(),
-                                ),
-                              )
-                            : null,
+                        onTap: () => _handleMenuAction(context, item.name),
                       );
                     }).toList(),
                   ),
@@ -93,6 +98,58 @@ class MyHomePage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _handleMenuAction(BuildContext context, String action) async {
+    switch (action) {
+      case 'Experiences':
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ExperienceListScreen()),
+        );
+        return;
+      case 'Add Education':
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const EducationFormPage()),
+        );
+        return;
+      case 'Add Experience':
+        if (!await ensureLoggedIn(context) || !context.mounted) return;
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ExperienceFormPage()),
+        );
+        return;
+      case 'Login':
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+        return;
+      case 'Logout':
+        try {
+          await context.read<AuthState>().logout();
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('Logged out.')));
+        } on ApiException catch (error) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Logged out locally; server returned ${error.statusCode}.',
+              ),
+            ),
+          );
+        } catch (error) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Logout request failed: $error')),
+          );
+        }
+        return;
+    }
   }
 }
 
